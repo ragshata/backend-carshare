@@ -13,6 +13,15 @@ def get_session():
         yield session
 
 
+@router.delete("/{trip_id}", response_model=Trip)
+def delete_trip(trip_id: int, session: Session = Depends(get_session)):
+    trip = session.get(Trip, trip_id)
+    if not trip:
+        raise HTTPException(status_code=404, detail="Поездка не найдена")
+    session.delete(trip)
+    session.commit()
+    return trip
+
 @router.get("/", response_model=List[Trip])
 def list_trips(
     session: Session = Depends(get_session),
