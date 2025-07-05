@@ -74,3 +74,4 @@ def auth_via_telegram(data: TelegramAuthIn, session: Session = Depends(get_sessi
         "access_token": token,
         "user": user,
     }
+
