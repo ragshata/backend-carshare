@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 from app.database import init_db
-from app.routers import auth, trips, bookings, me, dev_users
+from app.routers import auth, trips, bookings, me, dev_users, users
 
 
 @asynccontextmanager
@@ -29,3 +29,4 @@ app.include_router(trips.router)
 app.include_router(bookings.router)
 app.include_router(me.router) 
 app.include_router(dev_users.router)
+app.include_router(users.router)
