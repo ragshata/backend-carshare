@@ -27,6 +27,17 @@ def finish_trip(trip_id: int, session: Session = Depends(get_session)):
     return trip
 
 
+@router.patch("/{trip_id}/finish")
+def finish_trip(trip_id: int, session: Session = Depends(get_session)):
+    trip = session.get(Trip, trip_id)
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    trip.status = "done"
+    session.add(trip)
+    session.commit()
+    session.refresh(trip)
+    return trip
+
 @router.get("/{trip_id}/passengers")
 def get_trip_passengers(trip_id: int, session: Session = Depends(get_session)):
     # Находим все бронирования по этому trip_id со статусом 'confirmed'
