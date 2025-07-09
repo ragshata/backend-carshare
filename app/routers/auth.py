@@ -24,32 +24,25 @@ class TelegramAuthIn(BaseModel):
 
 @router.post("/telegram")
 def auth_via_telegram(data: TelegramAuthIn, session: Session = Depends(get_session)):
-    # Ищем пользователя по telegram_id
+    # Ищем по telegram_id
     user = session.exec(
         select(User).where(User.telegram_id == data.telegram_id)
     ).first()
 
     if not user:
-        # Если не нашли — создаём нового пользователя
+        # Только если не найден — создаём нового
         user = User(
             telegram_id=data.telegram_id,
             first_name=data.first_name,
             last_name=data.last_name,
             username=data.username,
-            photo_url=data.photo_url
+            photo_url=data.photo_url,
         )
         session.add(user)
-        try:
-            session.commit()
-            session.refresh(user)
-        except IntegrityError:
-            # Кто-то другой создал юзера в это же время — достаём его из БД
-            session.rollback()
-            user = session.exec(
-                select(User).where(User.telegram_id == data.telegram_id)
-            ).first()
+        session.commit()
+        session.refresh(user)
     else:
-        # Если пользователь уже есть, обновим его имя/фамилию/аву при необходимости
+        # Просто обнови нужные поля
         updated = False
         if user.first_name != data.first_name:
             user.first_name = data.first_name
@@ -67,11 +60,6 @@ def auth_via_telegram(data: TelegramAuthIn, session: Session = Depends(get_sessi
             session.add(user)
             session.commit()
             session.refresh(user)
-
+    # Возвращай только этого юзера!
     token = create_access_token(user.id)
-
-    return {
-        "access_token": token,
-        "user": user,
-    }
-
+    return {"access_token": token, "user": user}
