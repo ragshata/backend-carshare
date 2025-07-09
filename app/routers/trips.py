@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 from typing import Optional, List
 
+from app.models.booking import Booking
 from app.models.trip import Trip
 from app.database import engine
+from app.models.user import User
 
 router = APIRouter(prefix="/trips", tags=["trips"])
 
@@ -11,6 +13,34 @@ router = APIRouter(prefix="/trips", tags=["trips"])
 def get_session():
     with Session(engine) as session:
         yield session
+
+
+@router.patch("/trips/{trip_id}/finish")
+def finish_trip(trip_id: int, session: Session = Depends(get_session)):
+    trip = session.get(Trip, trip_id)
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    trip.status = "done"
+    session.add(trip)
+    session.commit()
+    session.refresh(trip)
+    return trip
+
+
+@router.get("/{trip_id}/passengers")
+def get_trip_passengers(trip_id: int, session: Session = Depends(get_session)):
+    # Находим все бронирования по этому trip_id со статусом 'confirmed'
+    bookings = session.exec(
+        select(Booking).where(
+            (Booking.trip_id == trip_id) & (Booking.status == "confirmed")
+        )
+    ).all()
+    user_ids = [b.user_id for b in bookings]
+    if not user_ids:
+        return []
+    # Находим пользователей только по этим user_id
+    users = session.exec(select(User).where(User.id.in_(user_ids))).all()
+    return users
 
 
 @router.delete("/{trip_id}", response_model=Trip)
@@ -21,6 +51,7 @@ def delete_trip(trip_id: int, session: Session = Depends(get_session)):
     session.delete(trip)
     session.commit()
     return trip
+
 
 @router.get("/", response_model=List[Trip])
 def list_trips(
