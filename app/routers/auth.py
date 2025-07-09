@@ -20,7 +20,7 @@ class TelegramAuthIn(BaseModel):
     last_name: str = ""
     username: str = ""
     photo_url: str = ""  # если нужно сохранять аву
-
+#ghjcnj
 
 @router.post("/telegram")
 def auth_via_telegram(data: TelegramAuthIn, session: Session = Depends(get_session)):
