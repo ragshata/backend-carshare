@@ -15,3 +15,4 @@ class Trip(SQLModel, table=True):
     owner_id: int = Field(foreign_key="user.id")
     status: str = Field(default="active")
     created_at: Optional[str] = Field(default_factory=get_utc_now)
+    description: Optional[str] = None
