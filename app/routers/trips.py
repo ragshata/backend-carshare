@@ -16,23 +16,6 @@ def get_session():
         yield session
 
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
-
-from app.utils.telegram_notify import send_telegram_message
-from app.models.booking import Booking
-from app.models.trip import Trip
-from app.models.user import User
-from app.database import engine
-
-router = APIRouter(prefix="/trips", tags=["trips"])
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
-
-
 @router.patch("/{trip_id}/finish")
 def finish_trip(trip_id: int, session: Session = Depends(get_session)):
     trip = session.get(Trip, trip_id)
@@ -43,21 +26,27 @@ def finish_trip(trip_id: int, session: Session = Depends(get_session)):
     session.commit()
     session.refresh(trip)
 
-    # Получаем всех подтверждённых пассажиров
+    # Получить всех пассажиров с confirmed booking
     bookings = session.exec(
         select(Booking).where(
             (Booking.trip_id == trip_id) & (Booking.status == "confirmed")
         )
     ).all()
-    # Отправляем каждому уведомление
+    print(f"Всего подтвержденных пассажиров: {len(bookings)}")
     for booking in bookings:
         passenger = session.get(User, booking.user_id)
+        print(f"[DEBUG] Обрабатываем пассажира: {passenger}")
         if passenger and passenger.telegram_id:
-            send_telegram_message(
-                passenger.telegram_id,
-                "🚗 Ваша поездка завершена!\n"
-                "Пожалуйста, зайдите в приложение SafarBar и оцените водителя в разделе 'Мои бронирования'.",
+            print(
+                f"[DEBUG] Отправляю rate на {passenger.telegram_id} (driver_id={trip.owner_id}, trip_id={trip.id})"
             )
+            send_telegram_message_rate(
+                user_tg_id=passenger.telegram_id,
+                driver_id=trip.owner_id,
+                trip_id=trip.id,
+            )
+        else:
+            print(f"[DEBUG] Пассажир без Telegram ID или не найден: {passenger}")
     return trip
 
 
