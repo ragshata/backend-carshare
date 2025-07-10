@@ -40,14 +40,16 @@ def update_user_fields(
     return user
 
 
-@router.delete("/{user_id}")
-def delete_user(user_id: int, session: Session = Depends(get_session)):
-    user = session.get(User, user_id)
+@router.delete("/by_telegram/{telegram_id}")
+def delete_user_by_telegram_id(
+    telegram_id: int, session: Session = Depends(get_session)
+):
+    user = session.exec(select(User).where(User.telegram_id == telegram_id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     session.delete(user)
     session.commit()
-    return {"success": True, "detail": "User deleted"}
+    return {"success": True, "detail": "User deleted by telegram_id"}
 
 
 @router.delete("/delete_all")
