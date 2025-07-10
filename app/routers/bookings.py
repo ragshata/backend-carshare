@@ -7,6 +7,9 @@ from app.models.user import User
 from app.models.trip import Trip
 from app.database import engine
 
+# Импортируем функцию отправки уведомления (сделай такую функцию в utils/telegram_notify.py)
+from app.utils.telegram_notify import send_telegram_message
+
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
@@ -47,6 +50,17 @@ def create_booking(booking: Booking, session: Session = Depends(get_session)):
     session.add(booking)
     session.commit()
     session.refresh(booking)
+
+    # ——— Оповещение водителя
+    driver = session.get(User, trip.owner_id)
+    if driver and driver.telegram_id:
+        msg = (
+            f"🚗 <b>Новая заявка!</b>\n"
+            f"Пассажир <b>{user.first_name or ''} {user.last_name or ''}</b> "
+            f"забронировал поездку <b>{trip.from_} — {trip.to}</b> на {trip.date} {trip.time}."
+        )
+        send_telegram_message(driver.telegram_id, msg)
+
     # ——— Вернуть user как вложенный объект
     return BookingWithUser(**booking.dict(), user=user.dict())
 
@@ -103,6 +117,16 @@ def confirm_booking(booking_id: int, session: Session = Depends(get_session)):
     session.commit()
     session.refresh(booking)
     user = session.get(User, booking.user_id)
+    trip = session.get(Trip, booking.trip_id)
+
+    # ——— Оповещение пассажира
+    if user and user.telegram_id and trip:
+        msg = (
+            f"✅ <b>Ваша заявка подтверждена!</b>\n"
+            f"Поездка <b>{trip.from_} — {trip.to}</b> на {trip.date} {trip.time} подтверждена водителем."
+        )
+        send_telegram_message(user.telegram_id, msg)
+
     return BookingWithUser(**booking.dict(), user=user.dict() if user else None)
 
 
@@ -117,4 +141,14 @@ def reject_booking(booking_id: int, session: Session = Depends(get_session)):
     session.commit()
     session.refresh(booking)
     user = session.get(User, booking.user_id)
+    trip = session.get(Trip, booking.trip_id)
+
+    # ——— Оповещение пассажира
+    if user and user.telegram_id and trip:
+        msg = (
+            f"❌ <b>Ваша заявка отклонена</b>\n"
+            f"Поездка <b>{trip.from_} — {trip.to}</b> на {trip.date} {trip.time} отклонена водителем."
+        )
+        send_telegram_message(user.telegram_id, msg)
+
     return BookingWithUser(**booking.dict(), user=user.dict() if user else None)
