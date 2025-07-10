@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 from app.database import init_db
-from app.routers import admin, auth, reviews, trips, bookings, me, dev_users, users
+from app.routers import admin, auth, trips, bookings, me, dev_users, users
 
 
 @asynccontextmanager
@@ -12,7 +12,7 @@ async def lifespan(app: FastAPI):
     init_db()
     yield
 
-#check
+
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
@@ -25,7 +25,6 @@ app.add_middleware(
 
 # Подключение маршрутов
 app.include_router(auth.router)
-app.include_router(reviews.router)
 app.include_router(trips.router)
 app.include_router(bookings.router)
 app.include_router(admin.router)
