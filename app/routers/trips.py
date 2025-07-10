@@ -2,10 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 from typing import Optional, List
 
+from app.utils.telegram_notify import send_telegram_message_rate, send_telegram_message
 from app.models.booking import Booking
 from app.models.trip import Trip
 from app.database import engine
 from app.models.user import User
+
 
 router = APIRouter(prefix="/trips", tags=["trips"])
 
@@ -13,18 +15,6 @@ router = APIRouter(prefix="/trips", tags=["trips"])
 def get_session():
     with Session(engine) as session:
         yield session
-
-
-@router.patch("/trips/{trip_id}/finish")
-def finish_trip(trip_id: int, session: Session = Depends(get_session)):
-    trip = session.get(Trip, trip_id)
-    if not trip:
-        raise HTTPException(status_code=404, detail="Trip not found")
-    trip.status = "done"
-    session.add(trip)
-    session.commit()
-    session.refresh(trip)
-    return trip
 
 
 @router.patch("/{trip_id}/finish")
@@ -36,7 +26,23 @@ def finish_trip(trip_id: int, session: Session = Depends(get_session)):
     session.add(trip)
     session.commit()
     session.refresh(trip)
+
+    # Получить всех пассажиров с confirmed booking
+    bookings = session.exec(
+        select(Booking).where(
+            (Booking.trip_id == trip_id) & (Booking.status == "confirmed")
+        )
+    ).all()
+    for booking in bookings:
+        passenger = session.get(User, booking.user_id)
+        if passenger and passenger.telegram_id:
+            send_telegram_message_rate(
+                user_tg_id=passenger.telegram_id,
+                driver_id=trip.owner_id,
+                trip_id=trip.id,
+            )
     return trip
+
 
 @router.get("/{trip_id}/passengers")
 def get_trip_passengers(trip_id: int, session: Session = Depends(get_session)):
