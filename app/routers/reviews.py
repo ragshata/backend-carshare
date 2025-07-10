@@ -2,19 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select, SQLModel, Field
 from typing import Optional, List
 from app.database import engine
+from app.models.review import Review
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
-
-
-# --- Модель отзыва (если у тебя нет отдельного файла models/review.py, можно оставить тут)
-class Review(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    trip_id: int
-    author_id: int  # пассажир, кто оставил отзыв
-    driver_id: int  # водитель, кому отзыв
-    rating: int  # 1-5
-    text: Optional[str] = None
-    created_at: Optional[str] = None  # если нужна дата, иначе убери
 
 
 def get_session():
