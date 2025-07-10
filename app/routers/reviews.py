@@ -27,7 +27,7 @@ def create_review(review: Review, session: Session = Depends(get_session)):
     return review
 
 
-@router.get("/driver/{driver_id}", response_model=List[Review])
+@router.get("/driver/{driver_id}/", response_model=List[Review])
 def get_driver_reviews(driver_id: int, session: Session = Depends(get_session)):
     reviews = session.exec(select(Review).where(Review.driver_id == driver_id)).all()
     return reviews
