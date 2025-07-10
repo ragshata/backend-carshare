@@ -8,7 +8,6 @@ from app.models.trip import Trip
 from app.database import engine
 from app.models.user import User
 
-
 router = APIRouter(prefix="/trips", tags=["trips"])
 
 
@@ -33,20 +32,26 @@ def finish_trip(trip_id: int, session: Session = Depends(get_session)):
             (Booking.trip_id == trip_id) & (Booking.status == "confirmed")
         )
     ).all()
+    print(f"Всего подтвержденных пассажиров: {len(bookings)}")
     for booking in bookings:
         passenger = session.get(User, booking.user_id)
+        print(f"[DEBUG] Обрабатываем пассажира: {passenger}")
         if passenger and passenger.telegram_id:
+            print(
+                f"[DEBUG] Отправляю rate на {passenger.telegram_id} (driver_id={trip.owner_id}, trip_id={trip.id})"
+            )
             send_telegram_message_rate(
                 user_tg_id=passenger.telegram_id,
                 driver_id=trip.owner_id,
                 trip_id=trip.id,
             )
+        else:
+            print(f"[DEBUG] Пассажир без Telegram ID или не найден: {passenger}")
     return trip
 
 
 @router.get("/{trip_id}/passengers")
 def get_trip_passengers(trip_id: int, session: Session = Depends(get_session)):
-    # Находим все бронирования по этому trip_id со статусом 'confirmed'
     bookings = session.exec(
         select(Booking).where(
             (Booking.trip_id == trip_id) & (Booking.status == "confirmed")
@@ -55,7 +60,6 @@ def get_trip_passengers(trip_id: int, session: Session = Depends(get_session)):
     user_ids = [b.user_id for b in bookings]
     if not user_ids:
         return []
-    # Находим пользователей только по этим user_id
     users = session.exec(select(User).where(User.id.in_(user_ids))).all()
     return users
 
