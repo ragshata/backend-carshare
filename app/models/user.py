@@ -16,3 +16,4 @@ class User(SQLModel, table=True):
     active_driver: Optional[bool] = False
     car_number: Optional[str] = None
     car_brand: Optional[str] = None
+    car_photo_url: Optional[str] = None 
