@@ -1,55 +1,79 @@
-# app/routers/admin.py
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from app.models.user import User
+from typing import List
 from app.database import engine
+from app.models.trip import Trip
+from app.models.booking import Booking
+from app.models.review import Review
+from app.models.user import User
 
-router = APIRouter(prefix="/admin")
+router = APIRouter(prefix="/admin", tags=["admin"])
+
 
 def get_session():
     with Session(engine) as session:
         yield session
 
-# -- Доступ к админке по telegram_id (минимальная реализация)
-ADMIN_IDS = [6931781449, 6931781449]  # твои telegram_id админов
 
-def admin_required(telegram_id: int):
-    if telegram_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Not admin")
+# --- Аналитика ---
+@router.get("/stats")
+def admin_stats(session: Session = Depends(get_session)):
+    trips_count = session.exec(select(Trip)).count()
+    bookings_count = session.exec(select(Booking)).count()
+    users_count = session.exec(select(User)).count()
+    return {
+        "trips_count": trips_count,
+        "bookings_count": bookings_count,
+        "users_count": users_count,
+    }
 
-# -- Поиск пользователей (по id или username)
-@router.get("/users")
-def search_users(
-    telegram_id: int,  # Админ id для проверки
-    user_id: int = Query(None), 
-    username: str = Query(None),
-    session: Session = Depends(get_session)
-):
-    admin_required(telegram_id)
-    q = select(User)
-    if user_id:
-        q = q.where(User.id == user_id)
-    if username:
-        q = q.where(User.username == username)
-    return session.exec(q).all()
 
-# -- Изменение роли и active_driver
-@router.patch("/users/{user_id}")
-def patch_user(
-    user_id: int, 
-    data: dict, 
-    telegram_id: int,  # Админ id для проверки
-    session: Session = Depends(get_session)
-):
-    admin_required(telegram_id)
+# --- Список поездок ---
+@router.get("/trips", response_model=List[Trip])
+def admin_trips(session: Session = Depends(get_session)):
+    return session.exec(select(Trip)).all()
+
+
+# --- Список отзывов ---
+@router.get("/reviews", response_model=List[Review])
+def admin_reviews(session: Session = Depends(get_session)):
+    return session.exec(select(Review)).all()
+
+
+# --- Список пользователей ---
+@router.get("/users", response_model=List[User])
+def admin_users(session: Session = Depends(get_session)):
+    return session.exec(select(User)).all()
+
+
+# --- Удалить поездку ---
+@router.delete("/trips/{trip_id}")
+def admin_delete_trip(trip_id: int, session: Session = Depends(get_session)):
+    trip = session.get(Trip, trip_id)
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+    session.delete(trip)
+    session.commit()
+    return {"ok": True, "detail": "Trip deleted"}
+
+
+# --- Удалить отзыв ---
+@router.delete("/reviews/{review_id}")
+def admin_delete_review(review_id: int, session: Session = Depends(get_session)):
+    review = session.get(Review, review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    session.delete(review)
+    session.commit()
+    return {"ok": True, "detail": "Review deleted"}
+
+
+# --- Удалить пользователя ---
+@router.delete("/users/{user_id}")
+def admin_delete_user(user_id: int, session: Session = Depends(get_session)):
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if "is_driver" in data:
-        user.is_driver = data["is_driver"]
-    if "active_driver" in data:
-        user.active_driver = data["active_driver"]
-    session.add(user)
+    session.delete(user)
     session.commit()
-    session.refresh(user)
-    return user
+    return {"ok": True, "detail": "User deleted"}

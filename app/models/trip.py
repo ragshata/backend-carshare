@@ -8,8 +8,8 @@ class Trip(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     from_: str = Field(alias="from_")
     to: str
-    date: str
-    time: str
+    date: datetime.date
+    time: datetime.time
     seats: int
     price: int
     owner_id: int = Field(foreign_key="user.id")
