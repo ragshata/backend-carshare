@@ -18,13 +18,18 @@ def get_session():
 # --- Аналитика ---
 @router.get("/stats")
 def admin_stats(session: Session = Depends(get_session)):
-    trips_count = len(session.exec(select(Trip)).all())
-    bookings_count = len(session.exec(select(Booking)).all())
-    users_count = len(session.exec(select(User)).all())
+    trips_count = session.exec(select(Trip)).count()
+    bookings_count = session.exec(select(Booking)).count()
+    users_count = session.exec(select(User)).count()
+    # Считаем средний рейтинг водителей
+    reviews = session.exec(select(Review)).all()
+    ratings = [review.rating for review in reviews if review.rating]
+    avg_driver_rating = round(sum(ratings) / len(ratings), 2) if ratings else 0.0
     return {
         "trips_count": trips_count,
         "bookings_count": bookings_count,
         "users_count": users_count,
+        "avg_driver_rating": avg_driver_rating,
     }
 
 
