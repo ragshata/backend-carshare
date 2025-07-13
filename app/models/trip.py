@@ -14,5 +14,5 @@ class Trip(SQLModel, table=True):
     price: int
     owner_id: int = Field(foreign_key="user.id")
     status: str = Field(default="active")
-    created_at: Optional[datetime] = Field(default_factory=get_utc_now)
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
     description: Optional[str] = None
