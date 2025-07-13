@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session
-from pydantic import BaseModel
+from sqlmodel import Session, select
 from datetime import datetime, timedelta
+from pydantic import BaseModel
 from app.database import get_session
 from app.models.user import User
 
@@ -25,7 +25,8 @@ def start_driver_trial(data: TrialRequest, session: Session = Depends(get_sessio
     now = datetime.utcnow()
     trial_end = now + timedelta(days=3)
     user.active_driver = True
-    user.driver_trial_end = trial_end.isoformat()
+    user.driver_trial_end = trial_end  # Важно! Тут объект datetime, не строка
     session.add(user)
     session.commit()
+    session.refresh(user)
     return {"detail": "Trial activated", "trial_end": trial_end.isoformat()}
