@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlmodel import SQLModel, Field
 from typing import Optional
 
@@ -14,6 +15,7 @@ class User(SQLModel, table=True):
     registered_at: Optional[str] = None
     city: Optional[str] = None
     active_driver: Optional[bool] = False
+    driver_trial_end: Optional[datetime] = Field(default=None)
     car_number: Optional[str] = None
     car_brand: Optional[str] = None
-    car_photo_url: Optional[str] = None 
+    car_photo_url: Optional[str] = None
