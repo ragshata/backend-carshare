@@ -18,9 +18,9 @@ def get_session():
 # --- Аналитика ---
 @router.get("/stats")
 def admin_stats(session: Session = Depends(get_session)):
-    trips_count = session.exec(select(Trip)).count()
-    bookings_count = session.exec(select(Booking)).count()
-    users_count = session.exec(select(User)).count()
+    trips_count = len(session.exec(select(Trip)).all())
+    bookings_count = len(session.exec(select(Booking)).all())
+    users_count = len(session.exec(select(User)).all())
     return {
         "trips_count": trips_count,
         "bookings_count": bookings_count,
