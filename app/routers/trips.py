@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 from typing import Optional, List
+from datetime import date, time, datetime
 
 from app.utils.telegram_notify import send_telegram_message_rate
 from app.models.booking import Booking
@@ -125,6 +126,15 @@ def update_trip(trip_id: int, data: dict, session: Session = Depends(get_session
     if not trip:
         raise HTTPException(status_code=404, detail="Поездка не найдена")
     for k, v in data.items():
+        # Автоматически парсим строку в date/time
+        if k == "date" and isinstance(v, str):
+            v = date.fromisoformat(v)
+        if k == "time" and isinstance(v, str):
+            # Допускаем формат "21:05:00" или "21:05"
+            try:
+                v = time.fromisoformat(v)
+            except Exception:
+                v = datetime.strptime(v, "%H:%M").time()
         setattr(trip, k, v)
     session.add(trip)
     session.commit()
