@@ -1,7 +1,9 @@
-fastapi
+fastapi<0.110
 uvicorn[standard]
-sqlmodel
+sqlmodel==0.0.11
 sqlalchemy>=1.4,<2.0
+pydantic>=1.9,<2.0
+pydantic-settings<2.0
 python-multipart
 aiofiles
 requests
