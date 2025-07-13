@@ -18,25 +18,41 @@ def get_session():
 # --- Аналитика ---
 @router.get("/stats")
 def admin_stats(session: Session = Depends(get_session)):
-    trips_count = session.exec(select(Trip)).count()
-    bookings_count = session.exec(select(Booking)).count()
-    users_count = session.exec(select(User)).count()
-    # Считаем средний рейтинг водителей
+    trips = session.exec(select(Trip)).all()
+    bookings = session.exec(select(Booking)).all()
+    users = session.exec(select(User)).all()
     reviews = session.exec(select(Review)).all()
     ratings = [review.rating for review in reviews if review.rating]
     avg_driver_rating = round(sum(ratings) / len(ratings), 2) if ratings else 0.0
     return {
-        "trips_count": trips_count,
-        "bookings_count": bookings_count,
-        "users_count": users_count,
+        "trips_count": len(trips),
+        "bookings_count": len(bookings),
+        "users_count": len(users),
         "avg_driver_rating": avg_driver_rating,
     }
 
 
-# --- Список поездок ---
-@router.get("/trips", response_model=List[Trip])
+# --- Список поездок с именем водителя ---
+@router.get("/trips")
 def admin_trips(session: Session = Depends(get_session)):
-    return session.exec(select(Trip)).all()
+    trips = session.exec(select(Trip)).all()
+    result = []
+    for trip in trips:
+        driver = session.get(User, trip.owner_id)
+        result.append(
+            {
+                "id": trip.id,
+                "from_": trip.from_,
+                "to": trip.to,
+                "date": trip.date,
+                "time": trip.time,
+                "status": trip.status,
+                "driver_name": f"{driver.first_name or ''} {driver.last_name or ''}".strip()
+                or driver.username
+                or "—",
+            }
+        )
+    return result
 
 
 # --- Список отзывов ---
