@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 from app.database import init_db
-from app.routers import admin, auth, reviews, trips, bookings, me, dev_users, upload, users
+from app.routers import admin, auth, reviews, trial, trips, bookings, me, dev_users, upload, users
 
 
 @asynccontextmanager
@@ -35,4 +35,5 @@ app.include_router(admin.router)
 app.include_router(me.router) 
 app.include_router(dev_users.router)
 app.include_router(users.router)
+app.include_router(trial.router)
 app.include_router(upload.router)
