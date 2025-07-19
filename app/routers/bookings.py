@@ -46,6 +46,15 @@ def create_booking(booking: Booking, session: Session = Depends(get_session)):
     if trip.seats <= 0:
         raise HTTPException(status_code=400, detail="Нет свободных мест")
 
+    # --- Проверка: есть ли уже бронь этого пользователя на эту поездку
+    existing = session.exec(
+        select(Booking).where(
+            (Booking.trip_id == booking.trip_id) & (Booking.user_id == booking.user_id)
+        )
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Вы уже бронировали эту поездку!")
+
     trip.seats -= 1
     session.add(booking)
     session.commit()
