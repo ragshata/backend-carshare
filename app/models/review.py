@@ -4,9 +4,9 @@ from typing import Optional
 
 class Review(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    trip_id: int
-    author_id: int  # Кто оставил отзыв (обычно пассажир)
-    driver_id: int  # Кому (водителю)
-    rating: int  # Оценка (1-5)
-    text: Optional[str]  # Текст отзыва
+    trip_id: int = Field(foreign_key="trip.id")
+    author_id: int = Field(foreign_key="user.id")  # Кто оставил отзыв
+    driver_id: int = Field(foreign_key="user.id")  # Кому (водителю)
+    rating: int
+    text: Optional[str] = None
     created_at: Optional[str] = None
