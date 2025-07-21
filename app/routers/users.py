@@ -25,6 +25,7 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = None
 
 
+
 @router.patch("/{user_id}", response_model=User)
 def update_user_fields(
     user_id: int, data: UserUpdate, session: Session = Depends(get_session)

@@ -8,7 +8,7 @@ from app.models.trip import Trip
 from app.database import engine
 
 # Импортируем функцию отправки уведомления (сделай такую функцию в utils/telegram_notify.py)
-from app.utils.telegram_notify import send_telegram_message
+from app.utils.telegram_notify import send_new_booking_notification, send_telegram_message
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
@@ -60,15 +60,10 @@ def create_booking(booking: Booking, session: Session = Depends(get_session)):
     session.commit()
     session.refresh(booking)
 
-    # ——— Оповещение водителя
+    # ——— Оповещение водителя с inline-кнопкой
     driver = session.get(User, trip.owner_id)
     if driver and driver.telegram_id:
-        msg = (
-            f"🚗 <b>Новая заявка!</b>\n"
-            f"Пассажир <b>{user.first_name or ''} {user.last_name or ''}</b> "
-            f"забронировал поездку <b>{trip.from_} — {trip.to}</b> на {trip.date} {trip.time}."
-        )
-        send_telegram_message(driver.telegram_id, msg)
+        send_new_booking_notification(driver.telegram_id, trip.id)
 
     # ——— Вернуть user как вложенный объект
     return BookingWithUser(**booking.dict(), user=user.dict())
