@@ -8,8 +8,11 @@ from app.models.trip import Trip
 from app.database import engine
 
 # Импортируем функцию отправки уведомления (сделай такую функцию в utils/telegram_notify.py)
-from app.utils.telegram_notify import send_new_booking_notification, send_telegram_message
-
+from app.utils.telegram_notify import (
+    send_new_booking_notification,
+    send_telegram_message,
+)
+    
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
