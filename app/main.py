@@ -15,6 +15,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+@app.get('/')
+def prints():
+    return {'message': 'HI!'}
+
 from fastapi.staticfiles import StaticFiles
 app.mount("/static", StaticFiles(directory='static'), name='static')
 
