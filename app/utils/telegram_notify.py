@@ -1,11 +1,11 @@
 import requests
 
 TELEGRAM_BOT_TOKEN = (
-    "8190058603:AAGDpggm-K1lZgGudQM_7tcOfod8AlpHJ4M"  # ← сюда вставь токен своего бота!
+    "7709134236:AAEhA7DRFlOq4-0DckormcF3SgcYcAdSsuM"  # ← сюда вставь токен своего бота!
 )
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
-BOT_USERNAME = "fortestingfortesting_bot"
+BOT_USERNAME = "Safarbarbot"
 
 
 def send_telegram_message(telegram_id: int, text: str):
