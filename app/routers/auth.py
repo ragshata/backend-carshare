@@ -20,7 +20,7 @@ class TelegramAuthIn(BaseModel):
     last_name: str = ""
     username: str = ""
     photo_url: str = ""  # если нужно сохранять аву
-#ghjcnj
+
 
 @router.post("/telegram")
 def auth_via_telegram(data: TelegramAuthIn, session: Session = Depends(get_session)):
@@ -42,24 +42,29 @@ def auth_via_telegram(data: TelegramAuthIn, session: Session = Depends(get_sessi
         session.commit()
         session.refresh(user)
     else:
-        # Просто обнови нужные поля
         updated = False
-        if user.first_name != data.first_name:
+
+        if not user.first_name and data.first_name:
             user.first_name = data.first_name
             updated = True
-        if user.last_name != data.last_name:
+
+        if not user.last_name and data.last_name:
             user.last_name = data.last_name
             updated = True
-        if user.username != data.username:
+
+        if not user.username and data.username:
             user.username = data.username
             updated = True
-        if hasattr(user, "photo_url") and user.photo_url != data.photo_url:
+
+        if hasattr(user, "photo_url") and not user.photo_url and data.photo_url:
             user.photo_url = data.photo_url
             updated = True
+
         if updated:
             session.add(user)
             session.commit()
             session.refresh(user)
+
     # Возвращай только этого юзера!
     token = create_access_token(user.id)
     return {"access_token": token, "user": user}
