@@ -47,24 +47,16 @@ def admin_trips(session: Session = Depends(get_session)):
                 "date": trip.date,
                 "time": trip.time,
                 "status": trip.status,
+                "owner_id": trip.owner_id,
+                "description": trip.description,
+                "car_number": trip.car_number,
+                "car_brand": trip.car_brand,
                 "driver_name": f"{driver.first_name or ''} {driver.last_name or ''}".strip()
                 or driver.username
                 or "—",
             }
         )
     return result
-
-
-# --- Список отзывов ---
-@router.get("/reviews", response_model=List[Review])
-def admin_reviews(session: Session = Depends(get_session)):
-    return session.exec(select(Review)).all()
-
-
-# --- Список пользователей ---
-@router.get("/users", response_model=List[User])
-def admin_users(session: Session = Depends(get_session)):
-    return session.exec(select(User)).all()
 
 
 # --- Удалить поездку ---
@@ -78,6 +70,12 @@ def admin_delete_trip(trip_id: int, session: Session = Depends(get_session)):
     return {"ok": True, "detail": "Trip deleted"}
 
 
+# --- Список отзывов ---
+@router.get("/reviews", response_model=List[Review])
+def admin_reviews(session: Session = Depends(get_session)):
+    return session.exec(select(Review)).all()
+
+
 # --- Удалить отзыв ---
 @router.delete("/reviews/{review_id}")
 def admin_delete_review(review_id: int, session: Session = Depends(get_session)):
@@ -87,6 +85,12 @@ def admin_delete_review(review_id: int, session: Session = Depends(get_session))
     session.delete(review)
     session.commit()
     return {"ok": True, "detail": "Review deleted"}
+
+
+# --- Список пользователей ---
+@router.get("/users", response_model=List[User])
+def admin_users(session: Session = Depends(get_session)):
+    return session.exec(select(User)).all()
 
 
 # --- Удалить пользователя ---
