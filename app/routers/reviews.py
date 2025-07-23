@@ -2,18 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from typing import List
 from app.models.review import Review
-from app.database import engine
+from app.database import get_session
 from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import delete
-from app.database import get_async_session
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
 
 
 @router.post("/", response_model=Review)
@@ -29,14 +21,12 @@ def create_review(review: Review, session: Session = Depends(get_session)):
 
 @router.get("/driver/{driver_id}/", response_model=List[Review])
 def get_driver_reviews(driver_id: int, session: Session = Depends(get_session)):
-    reviews = session.exec(select(Review).where(Review.driver_id == driver_id)).all()
-    return reviews
+    return session.exec(select(Review).where(Review.driver_id == driver_id)).all()
 
 
 @router.get("/", response_model=List[Review])
 def get_all_reviews(session: Session = Depends(get_session)):
-    reviews = session.exec(select(Review)).all()
-    return reviews
+    return session.exec(select(Review)).all()
 
 
 @router.delete("/{review_id}/")
