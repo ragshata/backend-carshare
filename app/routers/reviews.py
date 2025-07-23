@@ -43,8 +43,7 @@ def get_all_reviews(session: Session = Depends(get_session)):
 def delete_review(review_id: int, session: Session = Depends(get_session)):
     review = session.get(Review, review_id)
     if not review:
-        raise HTTPException(status_code=404, detail="Review not found")
+        raise HTTPException(status_code=404, detail="Отзыв не найден")
     session.delete(review)
     session.commit()
-    return {"detail": "Review deleted"}
-#232
+    return {"detail": "Отзыв удалён"}
