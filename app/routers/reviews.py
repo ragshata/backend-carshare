@@ -47,3 +47,4 @@ def delete_review(review_id: int, session: Session = Depends(get_session)):
     session.delete(review)
     session.commit()
     return {"detail": "Review deleted"}
+#232
