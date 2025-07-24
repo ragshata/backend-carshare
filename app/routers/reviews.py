@@ -31,9 +31,14 @@ def get_all_reviews(session: Session = Depends(get_session)):
 
 @router.delete("/{review_id}/")
 def delete_review(review_id: int, session: Session = Depends(get_session)):
-    review = session.get(Review, review_id)
-    if not review:
-        raise HTTPException(status_code=404, detail="Отзыв не найден")
-    session.delete(review)
-    session.commit()
-    return {"detail": "Отзыв удалён"}
+    try:
+        review = session.get(Review, review_id)
+        if not review:
+            raise HTTPException(status_code=404, detail="Отзыв не найден")
+        session.delete(review)
+        session.commit()
+        return {"detail": "Отзыв удалён"}
+    except Exception as e:
+        session.rollback()
+        print("Ошибка удаления отзыва:", e)
+        raise HTTPException(status_code=500, detail="Ошибка при удалении отзыва")
