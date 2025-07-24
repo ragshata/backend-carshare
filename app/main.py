@@ -29,7 +29,7 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 def prints():
-    return {"message": "gos"}
+    return {"message": "wwwe"}
 
 
 from fastapi.staticfiles import StaticFiles
