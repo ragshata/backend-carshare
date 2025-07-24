@@ -8,6 +8,7 @@ from app.routers import (
     admin,
     auth,
     reviews,
+    subscription,
     trial,
     trips,
     bookings,
@@ -29,7 +30,7 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 def prints():
-    return {"message": "posrshe"}
+    return {"message": "white ferrari"}
 
 
 from fastapi.staticfiles import StaticFiles
@@ -48,6 +49,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(trips.router)
 app.include_router(reviews.router)
+app.include_router(subscription.router)
 app.include_router(bookings.router)
 app.include_router(admin.router)
 app.include_router(me.router)
