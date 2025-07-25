@@ -102,3 +102,21 @@ def admin_delete_user(user_id: int, session: Session = Depends(get_session)):
     session.delete(user)
     session.commit()
     return {"ok": True, "detail": "User deleted"}
+
+
+@router.get("/tariffs")
+def get_admin_tariffs(session: Session = Depends(get_session)):
+    return session.exec(select(Tariff)).all()
+
+
+@router.put("/tariffs/{tariff_id}")
+def update_tariff(tariff_id: int, data: dict, session: Session = Depends(get_session)):
+    tariff = session.get(Tariff, tariff_id)
+    if not tariff:
+        raise HTTPException(status_code=404, detail="Tariff not found")
+
+    for key, value in data.items():
+        setattr(tariff, key, value)
+    session.add(tariff)
+    session.commit()
+    return tariff
