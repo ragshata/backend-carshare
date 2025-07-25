@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from typing import List
 from app.database import engine
+from app.models.tariff import Tariff
 from app.models.trip import Trip
 from app.models.booking import Booking
 from app.models.review import Review
