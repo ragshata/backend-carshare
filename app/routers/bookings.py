@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 from typing import Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.models.booking import Booking
 from app.models.user import User
 from app.models.trip import Trip
@@ -120,9 +120,12 @@ def confirm_booking(booking_id: int, session: Session = Depends(get_session)):
     if not booking:
         raise HTTPException(status_code=404, detail="Бронирование не найдено")
     booking.status = "confirmed"
+    booking.confirmed_at = datetime.now(timezone.utc).isoformat()
+
     session.add(booking)
     session.commit()
     session.refresh(booking)
+
     user = session.get(User, booking.user_id)
     trip = session.get(Trip, booking.trip_id)
 
@@ -169,20 +172,18 @@ def cancel_booking(
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
 
-    # Проверяем, что пользователь является автором бронирования
     if booking.user_id != user_id:
         raise HTTPException(status_code=403, detail="Not allowed")
 
-    # Проверяем время
-    try:
-        created = datetime.fromisoformat(booking.created_at.replace("Z", "+00:00"))
-    except Exception:
-        created = datetime.utcnow()
+    # Если нет confirmed_at, отмена не разрешена
+    if not booking.confirmed_at:
+        raise HTTPException(status_code=400, detail="Поездка ещё не подтверждена")
 
-    if datetime.utcnow() - created > timedelta(minutes=30):
+    confirmed = datetime.fromisoformat(booking.confirmed_at.replace("Z", "+00:00"))
+    if datetime.utcnow() - confirmed > timedelta(minutes=30):
         raise HTTPException(
             status_code=400,
-            detail="Отменить можно только в течение 30 минут после бронирования",
+            detail="Отменить можно только в течение 30 минут после подтверждения",
         )
 
     session.delete(booking)
