@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.init_tariffs import init_tariffs
 
 from app.database import init_db
 from app.routers import (
@@ -22,6 +22,7 @@ from app.routers import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    init_tariffs()
     yield
 
 

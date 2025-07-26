@@ -6,5 +6,5 @@ class Tariff(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     duration_days: int
-    price: int
+    price: float
     description: Optional[str] = None
