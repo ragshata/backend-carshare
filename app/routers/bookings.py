@@ -174,7 +174,12 @@ def cancel_booking(
         raise HTTPException(status_code=403, detail="Not allowed")
 
     # Проверяем время
-    if datetime.utcnow() - booking.created_at > timedelta(minutes=30):
+    try:
+        created = datetime.fromisoformat(booking.created_at.replace("Z", "+00:00"))
+    except Exception:
+        created = datetime.utcnow()
+
+    if datetime.utcnow() - created > timedelta(minutes=30):
         raise HTTPException(
             status_code=400,
             detail="Отменить можно только в течение 30 минут после бронирования",
