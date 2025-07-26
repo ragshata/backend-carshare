@@ -119,8 +119,11 @@ def confirm_booking(booking_id: int, session: Session = Depends(get_session)):
     booking = session.get(Booking, booking_id)
     if not booking:
         raise HTTPException(status_code=404, detail="Бронирование не найдено")
+
     booking.status = "confirmed"
-    booking.confirmed_at = datetime.now(timezone.utc).isoformat()
+    booking.confirmed_at = datetime.now(
+        timezone.utc
+    )  # <-- Устанавливаем время подтверждения
 
     session.add(booking)
     session.commit()
@@ -129,7 +132,7 @@ def confirm_booking(booking_id: int, session: Session = Depends(get_session)):
     user = session.get(User, booking.user_id)
     trip = session.get(Trip, booking.trip_id)
 
-    # ——— Оповещение пассажира
+    # Оповещение пассажира
     if user and user.telegram_id and trip:
         msg = (
             f"✅ <b>Ваша заявка подтверждена!</b>\n"
@@ -175,12 +178,12 @@ def cancel_booking(
     if booking.user_id != user_id:
         raise HTTPException(status_code=403, detail="Not allowed")
 
-    # Если нет confirmed_at, отмена не разрешена
+    # Проверяем, что прошло не больше 30 минут после подтверждения
     if not booking.confirmed_at:
         raise HTTPException(status_code=400, detail="Поездка ещё не подтверждена")
-
-    confirmed = datetime.fromisoformat(booking.confirmed_at.replace("Z", "+00:00"))
-    if datetime.utcnow() - confirmed > timedelta(minutes=30):
+    if datetime.utcnow().replace(tzinfo=None) - booking.confirmed_at.replace(
+        tzinfo=None
+    ) > timedelta(minutes=30):
         raise HTTPException(
             status_code=400,
             detail="Отменить можно только в течение 30 минут после подтверждения",
