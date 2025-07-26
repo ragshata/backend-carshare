@@ -12,7 +12,7 @@ from app.utils.telegram_notify import (
     send_new_booking_notification,
     send_telegram_message,
 )
-    
+
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
@@ -159,3 +159,27 @@ def reject_booking(booking_id: int, session: Session = Depends(get_session)):
         send_telegram_message(user.telegram_id, msg)
 
     return BookingWithUser(**booking.dict(), user=user.dict() if user else None)
+
+
+@router.delete("/bookings/{booking_id}/cancel")
+def cancel_booking(
+    booking_id: int, user_id: int, session: Session = Depends(get_session)
+):
+    booking = session.get(Booking, booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    # Проверяем, что пользователь является автором бронирования
+    if booking.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not allowed")
+
+    # Проверяем время
+    if datetime.utcnow() - booking.created_at > timedelta(minutes=30):
+        raise HTTPException(
+            status_code=400,
+            detail="Отменить можно только в течение 30 минут после бронирования",
+        )
+
+    session.delete(booking)
+    session.commit()
+    return {"ok": True, "detail": "Booking cancelled"}
