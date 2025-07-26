@@ -31,7 +31,7 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 def prints():
-    return {"message": "zabery v rim"}
+    return {"message": "zabery v london"}
 
 
 from fastapi.staticfiles import StaticFiles
