@@ -30,11 +30,13 @@ class BookingWithUser(BaseModel):
     trip_id: int
     user_id: int
     status: Optional[str]
+    created_at: Optional[str]  # чтобы и это было видно
+    confirmed_at: Optional[datetime]  # добавляем!!!
     user: Optional[dict]
-    confirmed_at: Optional[datetime]
 
     class Config:
         orm_mode = True
+
 
 
 # ——— Создать бронь
