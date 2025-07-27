@@ -168,41 +168,15 @@ def reject_booking(booking_id: int, session: Session = Depends(get_session)):
 
 # ——— Отмена бронирования пользователем
 @router.delete("/{booking_id}/cancel", response_model=dict)
-def cancel_booking(
-    booking_id: int, user_id: int, session: Session = Depends(get_session)
-):
-    # 1. Ищем бронь
+def delete_booking(booking_id: int, session: Session = Depends(get_session)):
     booking = session.get(Booking, booking_id)
     if not booking:
         raise HTTPException(status_code=404, detail="Бронирование не найдено")
 
-    # 2. Проверяем, что инициатор — тот самый пассажир
-    if booking.user_id != user_id:
-        raise HTTPException(
-            status_code=403, detail="Нельзя отменить чужое бронирование"
-        )
-
-    # 3. Проверяем, что прошло не больше 30 минут после подтверждения
-    from datetime import datetime, timedelta, timezone
-
-    if not booking.confirmed_at:
-        raise HTTPException(status_code=400, detail="Поездка ещё не подтверждена")
-
-    now = datetime.now(timezone.utc)
-    diff = now - booking.confirmed_at
-    if diff > timedelta(minutes=30):
-        raise HTTPException(
-            status_code=400,
-            detail="Отменить можно только в течение 30 минут после подтверждения",
-        )
-
-    # 4. Возвращаем место в поездке
     trip = session.get(Trip, booking.trip_id)
     if trip:
         trip.seats += 1
 
-    # 5. Удаляем бронь
     session.delete(booking)
     session.commit()
-
     return {"ok": True, "detail": "Бронирование отменено"}
