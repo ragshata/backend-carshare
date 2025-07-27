@@ -31,6 +31,7 @@ class BookingWithUser(BaseModel):
     user_id: int
     status: Optional[str]
     user: Optional[dict]
+    confirmed_at: Optional[datetime]
 
     class Config:
         orm_mode = True
@@ -113,7 +114,7 @@ def delete_booking(booking_id: int, session: Session = Depends(get_session)):
     return {"ok": True, "detail": "Бронирование отменено"}
 
 
-# ——— Подтвердить бронирование
+# --- Подтвердить бронирование
 @router.post("/{booking_id}/confirm", response_model=BookingWithUser)
 def confirm_booking(booking_id: int, session: Session = Depends(get_session)):
     booking = session.get(Booking, booking_id)
@@ -121,9 +122,7 @@ def confirm_booking(booking_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Бронирование не найдено")
 
     booking.status = "confirmed"
-    booking.confirmed_at = datetime.now(
-        timezone.utc
-    )  # <-- Устанавливаем время подтверждения
+    booking.confirmed_at = datetime.now(timezone.utc)  # <-- время подтверждения
 
     session.add(booking)
     session.commit()
@@ -132,7 +131,6 @@ def confirm_booking(booking_id: int, session: Session = Depends(get_session)):
     user = session.get(User, booking.user_id)
     trip = session.get(Trip, booking.trip_id)
 
-    # Оповещение пассажира
     if user and user.telegram_id and trip:
         msg = (
             f"✅ <b>Ваша заявка подтверждена!</b>\n"
@@ -167,7 +165,8 @@ def reject_booking(booking_id: int, session: Session = Depends(get_session)):
     return BookingWithUser(**booking.dict(), user=user.dict() if user else None)
 
 
-@router.delete("/bookings/{booking_id}/cancel")
+# --- Отмена бронирования пользователем
+@router.delete("/{booking_id}/cancel")
 def cancel_booking(
     booking_id: int, user_id: int, session: Session = Depends(get_session)
 ):
@@ -178,12 +177,11 @@ def cancel_booking(
     if booking.user_id != user_id:
         raise HTTPException(status_code=403, detail="Not allowed")
 
-    # Проверяем, что прошло не больше 30 минут после подтверждения
     if not booking.confirmed_at:
         raise HTTPException(status_code=400, detail="Поездка ещё не подтверждена")
-    if datetime.utcnow().replace(tzinfo=None) - booking.confirmed_at.replace(
-        tzinfo=None
-    ) > timedelta(minutes=30):
+
+    # 30 минут после подтверждения
+    if datetime.now(timezone.utc) - booking.confirmed_at > timedelta(minutes=30):
         raise HTTPException(
             status_code=400,
             detail="Отменить можно только в течение 30 минут после подтверждения",
