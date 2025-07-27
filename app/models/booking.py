@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlmodel import SQLModel, Field
 from typing import Optional
 from app.utils.time import get_utc_now
@@ -9,4 +10,4 @@ class Booking(SQLModel, table=True):
     user_id: int
     status: str = Field(default="pending")
     created_at: Optional[str] = Field(default_factory=get_utc_now)
-    confirmed_at: Optional[str] = None
+    confirmed_at: Optional[datetime] = None
