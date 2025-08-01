@@ -100,6 +100,17 @@ def admin_delete_user(user_id: int, session: Session = Depends(get_session)):
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    # Удаляем все поездки пользователя
+    trips = session.exec(select(Trip).where(Trip.owner_id == user_id)).all()
+    for trip in trips:
+        session.delete(trip)
+
+    # Удаляем все отзывы пользователя
+    reviews = session.exec(select(Review).where(Review.user_id == user_id)).all()
+    for review in reviews:
+        session.delete(review)
+
     session.delete(user)
     session.commit()
     return {"ok": True, "detail": "User deleted"}
