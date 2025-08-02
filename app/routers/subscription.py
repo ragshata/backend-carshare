@@ -26,7 +26,7 @@ def start_driver_trial(user_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=400, detail="Trial already used")
 
     # Активируем пробный период (14 дня)
-    trial_end = datetime.utcnow() + timedelta(days=14)
+    trial_end = datetime.utcnow() + timedelta(days=30)
     user.active_driver = True
     user.driver_trial_end = trial_end
     session.add(user)
