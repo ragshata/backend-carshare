@@ -115,20 +115,24 @@ def get_trip_by_id(trip_id: int, session: Session = Depends(get_session)):
 
 @router.post("/", response_model=Trip)
 def create_trip(trip: Trip, session: Session = Depends(get_session)):
-    # Если from_ не в списке городов — добавим
-    existing_from = session.exec(select(City).where(City.name == trip.from_)).first()
-    if not existing_from:
-        session.add(City(name=trip.from_))
+    # Проверяем и добавляем города, если их нет
+    def ensure_city(name: str):
+        name = name.strip()
+        existing = session.exec(select(City).where(City.name == name)).first()
+        if not existing:
+            new_city = City(name=name)
+            session.add(new_city)
+            session.commit()
+            session.refresh(new_city)
 
-    # Если to не в списке городов — добавим
-    existing_to = session.exec(select(City).where(City.name == trip.to)).first()
-    if not existing_to:
-        session.add(City(name=trip.to))
+    ensure_city(trip.from_)
+    ensure_city(trip.to)
 
     session.add(trip)
     session.commit()
     session.refresh(trip)
     return trip
+
 
 
 @router.patch("/{trip_id}", response_model=Trip)
