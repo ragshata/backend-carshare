@@ -32,7 +32,7 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 def prints():
-    return {"message": "updated delete"}
+    return {"message": "right niw"}
 
 
 from fastapi.staticfiles import StaticFiles
