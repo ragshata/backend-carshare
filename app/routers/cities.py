@@ -53,3 +53,16 @@ def delete_city(city_id: int, session: Session = Depends(get_session)):
     session.delete(city)
     session.commit()
     return {"ok": True}
+
+@router.get("/custom", response_model=list[str])
+def get_custom_cities(session: Session = Depends(get_session)):
+    """
+    Возвращает только города, которых нет в дефолтном списке DEFAULT_CITIES.
+    """
+    all_cities = session.exec(select(City)).all()
+    result = [
+        city.name
+        for city in all_cities
+        if city.name not in DEFAULT_CITIES
+    ]
+    return result
