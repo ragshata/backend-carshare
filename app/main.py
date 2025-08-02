@@ -7,6 +7,7 @@ from app.database import init_db
 from app.routers import (
     admin,
     auth,
+    cities,
     reviews,
     subscription,
     trial,
@@ -48,6 +49,7 @@ app.add_middleware(
 
 # Подключение маршрутов
 app.include_router(auth.router)
+app.include_router(cities.router)
 app.include_router(trips.router)
 app.include_router(reviews.router)
 app.include_router(subscription.router)

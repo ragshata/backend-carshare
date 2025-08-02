@@ -3,6 +3,7 @@ from sqlmodel import Session, select
 from typing import Optional, List
 from datetime import date, time, datetime
 
+from app.models.city import City
 from app.utils.telegram_notify import send_telegram_message_rate
 from app.models.booking import Booking
 from app.models.trip import Trip
@@ -114,6 +115,18 @@ def get_trip_by_id(trip_id: int, session: Session = Depends(get_session)):
 
 @router.post("/", response_model=Trip)
 def create_trip(trip: Trip, session: Session = Depends(get_session)):
+    # Добавляем города, если их нет в таблице City
+    for city_name in [trip.from_, trip.to]:
+        if city_name:
+            city_name_clean = city_name.strip()
+            existing_city = session.exec(
+                select(City).where(City.name == city_name_clean)
+            ).first()
+            if not existing_city:
+                session.add(City(name=city_name_clean))
+                session.commit()
+
+    # Сохраняем поездку
     session.add(trip)
     session.commit()
     session.refresh(trip)
