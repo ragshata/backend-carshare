@@ -115,18 +115,16 @@ def get_trip_by_id(trip_id: int, session: Session = Depends(get_session)):
 
 @router.post("/", response_model=Trip)
 def create_trip(trip: Trip, session: Session = Depends(get_session)):
-    # Добавляем города, если их нет в таблице City
-    for city_name in [trip.from_, trip.to]:
-        if city_name:
-            city_name_clean = city_name.strip()
-            existing_city = session.exec(
-                select(City).where(City.name == city_name_clean)
-            ).first()
-            if not existing_city:
-                session.add(City(name=city_name_clean))
-                session.commit()
+    # Если from_ не в списке городов — добавим
+    existing_from = session.exec(select(City).where(City.name == trip.from_)).first()
+    if not existing_from:
+        session.add(City(name=trip.from_))
 
-    # Сохраняем поездку
+    # Если to не в списке городов — добавим
+    existing_to = session.exec(select(City).where(City.name == trip.to)).first()
+    if not existing_to:
+        session.add(City(name=trip.to))
+
     session.add(trip)
     session.commit()
     session.refresh(trip)

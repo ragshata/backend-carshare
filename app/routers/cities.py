@@ -1,21 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from typing import List
-from app.models import City
 from app.database import get_session
+from app.models import City
+from typing import List
 
-router = APIRouter(prefix="/cities", tags=["cities"])
+router = APIRouter(prefix="/cities", tags=["Cities"])
 
 
+# Получить список городов
 @router.get("/", response_model=List[City])
 def get_cities(session: Session = Depends(get_session)):
-    return session.exec(select(City).order_by(City.name)).all()
+    cities = session.exec(select(City)).all()
+    return cities
 
 
+# Добавить новый город
 @router.post("/", response_model=City)
 def add_city(city: City, session: Session = Depends(get_session)):
-    existing = session.exec(select(City).where(City.name == city.name)).first()
-    if existing:
+    db_city = session.exec(select(City).where(City.name == city.name)).first()
+    if db_city:
         raise HTTPException(status_code=400, detail="Город уже существует")
     session.add(city)
     session.commit()
@@ -23,6 +26,7 @@ def add_city(city: City, session: Session = Depends(get_session)):
     return city
 
 
+# Удалить город
 @router.delete("/{city_id}")
 def delete_city(city_id: int, session: Session = Depends(get_session)):
     city = session.get(City, city_id)
@@ -30,4 +34,4 @@ def delete_city(city_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Город не найден")
     session.delete(city)
     session.commit()
-    return {"detail": "Город удалён"}
+    return {"ok": True}
