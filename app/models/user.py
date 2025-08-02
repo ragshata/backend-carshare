@@ -15,7 +15,7 @@ class User(SQLModel, table=True):
     registered_at: Optional[str] = None
     city: Optional[str] = None
     active_driver: Optional[bool] = False
-    gender: Optional[str] = Field(default=None)
+    gender: Optional[str] = None
     driver_trial_end: Optional[datetime] = Field(default=None)
     car_number: Optional[str] = None
     car_brand: Optional[str] = None

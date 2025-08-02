@@ -20,6 +20,7 @@ class UserUpdate(BaseModel):
     active_driver: Optional[bool] = None
     car_number: Optional[str] = None
     car_brand: Optional[str] = None
+    gender: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     phone: Optional[str] = None
