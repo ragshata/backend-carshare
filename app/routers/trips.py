@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlmodel import Session, select
+from sqlmodel import Session, and_, or_, select
 from typing import Optional, List
 from datetime import date, time, datetime
 
@@ -84,6 +84,7 @@ def list_trips(
     driver_id: Optional[int] = Query(None, description="ID водителя"),
 ):
     query = select(Trip)
+
     if from_:
         query = query.where(Trip.from_ == from_)
     if to:
@@ -100,6 +101,15 @@ def list_trips(
         query = query.where(Trip.price <= maxPrice)
     if driver_id:
         query = query.where(Trip.owner_id == driver_id)
+
+    if not status:
+        now = datetime.now()
+        query = query.where(
+            or_(
+                Trip.date > now.date(),
+                and_(Trip.date == now.date(), Trip.time >= now.time()),
+            )
+        )
 
     trips = session.exec(query).all()
     return trips
