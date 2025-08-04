@@ -57,3 +57,28 @@ def send_new_booking_notification(driver_tg_id: int, trip_id: int):
         r.raise_for_status()
     except Exception as e:
         print(f"Ошибка отправки уведомления о заявке: {e}")
+
+
+def send_booking_cancelled_notification(driver_tg_id: int, trip_id: int):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    mini_app_url = f"https://t.me/{BOT_USERNAME}?startapp=trip_{trip_id}"
+    text = (
+        "❗️Пассажир отменил бронь на вашу поездку.\n"
+        "Место снова доступно для бронирования.\n"
+        "Посмотреть детали:"
+    )
+    reply_markup = {
+        "inline_keyboard": [[{"text": "Открыть поездку", "url": mini_app_url}]]
+    }
+    data = {
+        "chat_id": driver_tg_id,
+        "text": text,
+        "reply_markup": reply_markup,
+        "parse_mode": "HTML",
+    }
+    try:
+        r = requests.post(url, json=data, timeout=5)
+        print("Telegram send result:", r.text)
+        r.raise_for_status()
+    except Exception as e:
+        print(f"Ошибка отправки уведомления об отмене брони: {e}")

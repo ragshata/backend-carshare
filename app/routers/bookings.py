@@ -9,6 +9,7 @@ from app.database import engine
 
 # Импортируем функцию отправки уведомления (сделай такую функцию в utils/telegram_notify.py)
 from app.utils.telegram_notify import (
+    send_booking_cancelled_notification,
     send_new_booking_notification,
     send_telegram_message,
 )
@@ -166,7 +167,6 @@ def reject_booking(booking_id: int, session: Session = Depends(get_session)):
     return BookingWithUser(**booking.dict(), user=user.dict() if user else None)
 
 
-# ——— Отмена бронирования пользователем
 @router.delete("/{booking_id}/cancel", response_model=dict)
 def delete_booking(booking_id: int, session: Session = Depends(get_session)):
     booking = session.get(Booking, booking_id)
@@ -174,8 +174,30 @@ def delete_booking(booking_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Бронирование не найдено")
 
     trip = session.get(Trip, booking.trip_id)
+    notify_driver = False
+
+    # Уведомление — если пассажир отменяет подтвержденную бронь в течение 30 минут
+    if booking.status == "confirmed" and booking.confirmed_at:
+        now = datetime.now(timezone.utc)
+        confirmed_at = booking.confirmed_at
+        if isinstance(confirmed_at, str):
+            # Если вдруг строка — парсим в datetime
+            confirmed_at = datetime.fromisoformat(confirmed_at)
+        if (now - confirmed_at) <= timedelta(minutes=30):
+            notify_driver = True
+
+    # Увеличиваем свободные места
     if trip:
         trip.seats += 1
+
+    # Получить telegram_id водителя
+    if notify_driver and trip:
+        driver = session.get(User, trip.owner_id)
+        if driver and driver.telegram_id:
+            try:
+                send_booking_cancelled_notification(driver.telegram_id, trip.id)
+            except Exception as e:
+                print(f"Ошибка отправки уведомления водителю: {e}")
 
     session.delete(booking)
     session.commit()
