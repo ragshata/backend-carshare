@@ -181,8 +181,9 @@ def delete_booking(booking_id: int, session: Session = Depends(get_session)):
         now = datetime.now(timezone.utc)
         confirmed_at = booking.confirmed_at
         if isinstance(confirmed_at, str):
-            # Если вдруг строка — парсим в datetime
             confirmed_at = datetime.fromisoformat(confirmed_at)
+        if confirmed_at.tzinfo is None:  # если нет таймзоны
+            confirmed_at = confirmed_at.replace(tzinfo=timezone.utc)
         if (now - confirmed_at) <= timedelta(minutes=30):
             notify_driver = True
 
