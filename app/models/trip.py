@@ -1,6 +1,5 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
-from app.utils.time import get_utc_now
 from datetime import date, datetime, time
 
 
@@ -16,3 +15,5 @@ class Trip(SQLModel, table=True):
     status: str = Field(default="active")
     created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
     description: Optional[str] = None
+    # NEW: валюта (ISO-код)
+    currency: str = Field(default="TJS", max_length=5)

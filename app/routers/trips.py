@@ -28,7 +28,6 @@ def finish_trip(trip_id: int, session: Session = Depends(get_session)):
     session.commit()
     session.refresh(trip)
 
-    # Получить всех пассажиров с confirmed booking
     bookings = session.exec(
         select(Booking).where(
             (Booking.trip_id == trip_id) & (Booking.status == "confirmed")
@@ -82,6 +81,7 @@ def list_trips(
     ),
     maxPrice: Optional[float] = Query(None, description="Максимальная цена"),
     driver_id: Optional[int] = Query(None, description="ID водителя"),
+    # currency: Optional[str] = Query(None, description="ISO-код валюты"),  # включи, если нужен фильтр
 ):
     query = select(Trip)
 
@@ -101,6 +101,8 @@ def list_trips(
         query = query.where(Trip.price <= maxPrice)
     if driver_id:
         query = query.where(Trip.owner_id == driver_id)
+    # if currency:
+    #     query = query.where(Trip.currency == currency)
 
     if not status:
         now = datetime.now()
@@ -127,7 +129,6 @@ def ensure_city(name: str, session: Session):
     name = name.strip()
     if not name:
         return
-    # проверяем, что города нет в дефолтных и базе
     from app.routers.cities import DEFAULT_CITIES
 
     if name in DEFAULT_CITIES:
@@ -140,9 +141,9 @@ def ensure_city(name: str, session: Session):
 
 @router.post("/", response_model=Trip)
 def create_trip(trip: Trip, session: Session = Depends(get_session)):
+    # currency приходит в теле запроса и сохраняется
     ensure_city(trip.from_, session)
     ensure_city(trip.to, session)
-
     session.add(trip)
     session.commit()
     session.refresh(trip)
@@ -155,11 +156,9 @@ def update_trip(trip_id: int, data: dict, session: Session = Depends(get_session
     if not trip:
         raise HTTPException(status_code=404, detail="Поездка не найдена")
     for k, v in data.items():
-        # Автоматически парсим строку в date/time
         if k == "date" and isinstance(v, str):
             v = date.fromisoformat(v)
         if k == "time" and isinstance(v, str):
-            # Допускаем формат "21:05:00" или "21:05"
             try:
                 v = time.fromisoformat(v)
             except Exception:
@@ -169,3 +168,4 @@ def update_trip(trip_id: int, data: dict, session: Session = Depends(get_session
     session.commit()
     session.refresh(trip)
     return trip
+    
